@@ -1,3 +1,6 @@
+#Build FP to be picked by both system and vendor
+BUILD_FINGERPRINT := "google/crosshatch/crosshatch:10/QQ2A.200405.005/6254899:user/release-keys"
+
 # Audio
 PRODUCT_PROPERTY_OVERRIDES += \
     af.fast_track_multiplier=1 \
