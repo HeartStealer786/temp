@@ -24,9 +24,9 @@ VENDOR=xiaomi
 MY_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
 
-AOSIP_ROOT="$MY_DIR"/../../..
+LINEAGE_ROOT="$MY_DIR"/../../..
 
-HELPER="$AOSIP_ROOT"/vendor/aosip/build/tools/extract_utils.sh
+HELPER="$LINEAGE_ROOT"/vendor/aosp/build/tools/extract_utils.sh
 if [ ! -f "$HELPER" ]; then
     echo "Unable to find helper script at $HELPER"
     exit 1
@@ -34,10 +34,18 @@ fi
 . "$HELPER"
 
 # Default to sanitizing the vendor folder before extraction
-CLEAN_VENDOR=true
+clean_vendor=true
+ONLY_COMMON=
+ONLY_DEVICE=
 
 while [ "${#}" -gt 0 ]; do
     case "${1}" in
+        -o | --only-common )
+                ONLY_COMMON=false
+                ;;
+        -d | --only-device )
+                ONLY_DEVICE=false
+                ;;
         -n | --no-cleanup )
             CLEAN_VENDOR=false
             ;;
@@ -46,6 +54,7 @@ while [ "${#}" -gt 0 ]; do
                 ;;
         -s | --section )
                 SECTION="${2}"; shift
+                clean_vendor=false
                 CLEAN_VENDOR=false
                 ;;
         * )
@@ -70,27 +79,28 @@ function blob_fixup() {
         patchelf --remove-needed vendor.xiaomi.hardware.mtdservice@1.0.so "${2}"
         sed -i "s|/system/etc/firmware|/vendor/firmware\x0\x0\x0\x0|g" "${2}"
         ;;
+
+    vendor/lib/hw/camera.sdm660.so)
+        patchelf --add-needed camera.sdm660_shim.so "${2}"
+        ;;
+
+    product/etc/permissions/vendor.qti.hardware.data.connection-V1.{0,1}-java.xml)
+        sed -i 's/xml version="2.0"/xml version="1.0"/' "${2}"
+
     esac
 }
 
 # Initialize the common helper
-setup_vendor "$DEVICE_COMMON" "$VENDOR" "$AOSIP_ROOT" true $CLEAN_VENDOR
+setup_vendor "$DEVICE_COMMON" "$VENDOR" "$LINEAGE_ROOT" true $clean_vendor
 
+if [ -z "${ONLY_DEVICE}" ] && [ -s "${MY_DIR}/proprietary-files.txt" ]; then
 extract "$MY_DIR"/proprietary-files.txt "$SRC" \
-    "${KANG}" --section "${SECTION}"
-extract "$MY_DIR"/proprietary-files-fm.txt "$SRC" \
-    "${KANG}" --section "${SECTION}"
-
-if [ -s "$MY_DIR"/../$DEVICE_SPECIFIED_COMMON/proprietary-files.txt ];then
-    # Reinitialize the helper for device specified common
-    setup_vendor "$DEVICE_SPECIFIED_COMMON" "$VENDOR" "$AOSIP_ROOT" false "$CLEAN_VENDOR"
-    extract "$MY_DIR"/../$DEVICE_SPECIFIED_COMMON/proprietary-files.txt "$SRC" \
     "${KANG}" --section "${SECTION}"
 fi
 
-if [ -s "$MY_DIR"/../$DEVICE/proprietary-files.txt ]; then
+if [ -z "${ONLY_COMMON}" ] && [ -s "${MY_DIR}/../${DEVICE}/proprietary-files.txt" ]; then
     # Reinitialize the helper for device
-    setup_vendor "$DEVICE" "$VENDOR" "$AOSIP_ROOT" false "$CLEAN_VENDOR"
+    setup_vendor "$DEVICE" "$VENDOR" "$LINEAGE_ROOT" false "$CLEAN_VENDOR"
     extract "$MY_DIR"/../$DEVICE/proprietary-files.txt "$SRC" \
     "${KANG}" --section "${SECTION}"
 fi

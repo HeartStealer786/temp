@@ -1,3 +1,4 @@
+ 
 #!/bin/bash
 #
 # Copyright (C) 2018 The LineageOS Project
@@ -26,9 +27,9 @@ INITIAL_COPYRIGHT_YEAR=2018
 MY_DIR="${BASH_SOURCE%/*}"
 if [[ ! -d "$MY_DIR" ]]; then MY_DIR="$PWD"; fi
 
-AOSIP_ROOT="$MY_DIR"/../../..
+LINEAGE_ROOT="$MY_DIR"/../../..
 
-HELPER="$AOSIP_ROOT"/vendor/aosip/build/tools/extract_utils.sh
+HELPER="$LINEAGE_ROOT"/vendor/aosp/build/tools/extract_utils.sh
 if [ ! -f "$HELPER" ]; then
     echo "Unable to find helper script at $HELPER"
     exit 1
@@ -36,35 +37,20 @@ fi
 . "$HELPER"
 
 # Initialize the common helper
-setup_vendor "$DEVICE_COMMON" "$VENDOR" "$AOSIP_ROOT" true
+setup_vendor "$DEVICE_COMMON" "$VENDOR" "$LINEAGE_ROOT" true
 
 # Copyright headers and guards
-write_headers "jasmine_sprout jason twolip wayne whyred"
+write_headers "twolip jasmine_sprout wayne clover lavender platina jason whyred"
 
 write_makefiles "$MY_DIR"/proprietary-files.txt true
 
 # Finish
 write_footers
 
-if [ -s "$MY_DIR"/../$DEVICE_SPECIFIED_COMMON/proprietary-files.txt ]; then
-    # Reinitialize the helper for device specified common
-    INITIAL_COPYRIGHT_YEAR="$DEVICE_BRINGUP_YEAR"
-    setup_vendor "$DEVICE_SPECIFIED_COMMON" "$VENDOR" "$AOSIP_ROOT" true
-
-    # Copyright headers and guards
-    write_headers "$DEVICE_SPECIFIED_COMMON_DEVICE"
-
-    # The standard device specified common blobs
-    write_makefiles "$MY_DIR"/../$DEVICE_SPECIFIED_COMMON/proprietary-files.txt true
-
-    # We are done!
-    write_footers
-fi
-
 if [ -s "$MY_DIR"/../$DEVICE/proprietary-files.txt ]; then
     # Reinitialize the helper for device
     INITIAL_COPYRIGHT_YEAR="$DEVICE_BRINGUP_YEAR"
-    setup_vendor "$DEVICE" "$VENDOR" "$AOSIP_ROOT" false
+    setup_vendor "$DEVICE" "$VENDOR" "$LINEAGE_ROOT" false
 
     # Copyright headers and guards
     write_headers
